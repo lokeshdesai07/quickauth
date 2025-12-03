@@ -1,6 +1,7 @@
 # quickauth
 
 A React Native authentication application with login, signup, and user session management features.
+Video: https://github.com/lokeshdesai07/quickauth/tree/main/src/video
 
 ## Features
 
