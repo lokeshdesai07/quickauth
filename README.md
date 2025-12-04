@@ -46,6 +46,12 @@ Before you begin, ensure you have the following installed:
 - **Node.js** (version 20 or higher) - Required by `package.json` engines
 - **npm** or **yarn** package manager
 - **React Native development environment** set up:
+  - **For iOS**: 
+    - macOS (required for iOS development)
+    - Xcode (latest version recommended)
+    - Xcode Command Line Tools: `xcode-select --install`
+    - CocoaPods: `sudo gem install cocoapods` (if not already installed)
+    - iOS Simulator (comes with Xcode) or physical iOS device
   - **For Android**: 
     - Android Studio
     - Android SDK (API level 21 or higher)
@@ -82,6 +88,31 @@ yarn start
 
 This will start the Metro bundler, which is the JavaScript build tool for React Native.
 
+### Run on iOS
+
+Open a new terminal window and run:
+
+```bash
+npm run ios
+# or
+yarn ios
+```
+
+**Prerequisites:**
+- Make sure you have Xcode installed and updated
+- For first-time setup, you need to install CocoaPods dependencies:
+  ```bash
+  cd ios
+  export LANG=en_US.UTF-8  # Fix encoding issues if needed
+  pod install
+  cd ..
+  ```
+- The app will automatically launch in the iOS Simulator (iPhone 16 Pro by default)
+- To run on a specific simulator, use: `npm run ios -- --simulator="iPhone 15"`
+- To run on a physical device, open `ios/MyAuthApp.xcworkspace` in Xcode and select your device
+
+**Note:** Always use `MyAuthApp.xcworkspace` (not `.xcodeproj`) when opening the project in Xcode after running `pod install`.
+
 ### Run on Android
 
 Open a new terminal window and run:
@@ -100,6 +131,10 @@ yarn android
 
 ```
 quickauth/
+├── __tests__/               # Test files
+│   ├── App.test.tsx
+│   ├── LoginScreen.test.tsx
+│   └── SignupScreen.test.tsx
 ├── src/
 │   ├── components/          # Reusable UI components
 │   │   ├── CustomeButton.tsx
@@ -116,8 +151,16 @@ quickauth/
 │       ├── LoginScreen.tsx
 │       └── SignupScreen.tsx
 ├── android/                 # Android native code
+├── ios/                     # iOS native code
+│   ├── MyAuthApp/          # iOS app source
+│   ├── MyAuthApp.xcodeproj # Xcode project
+│   ├── MyAuthApp.xcworkspace # Xcode workspace (use this after pod install)
+│   └── Podfile             # CocoaPods dependencies
 ├── App.tsx                  # Root component
-└── package.json            # Dependencies and scripts
+├── jest.config.js          # Jest configuration
+├── jest.setup.js           # Jest setup file (mocks)
+├── package.json            # Dependencies and scripts
+└── README.md               # Project documentation
 ```
 
 ## Key Technologies
@@ -130,6 +173,8 @@ quickauth/
 - **React Context API**: Global state management for authentication
 - **react-native-safe-area-context**: Safe area handling for different device screens
 - **react-native-gesture-handler**: Required dependency for React Navigation
+- **Jest** (^29.6.3): Testing framework with React Native preset
+- **react-test-renderer** (19.1.1): Component testing utilities
 
 ## Authentication Flow
 
@@ -191,11 +236,86 @@ quickauth/
 
 **Note**: All validation errors are displayed in real-time below the respective input fields in red text.
 
+## Testing
+
+The project includes comprehensive Jest test suites for the Login and Signup screens.
+
+### Test Setup
+
+- **Jest** (^29.6.3): Testing framework
+- **react-test-renderer** (19.1.1): React component testing utilities
+- **@react-native-async-storage/async-storage/jest/async-storage-mock**: Mock for AsyncStorage in tests
+
+### Test Files
+
+- `__tests__/LoginScreen.test.tsx`: 10 test cases covering:
+  - Component rendering
+  - UI element display
+  - Email validation (empty, invalid format)
+  - Password validation (empty, too short)
+  - Successful login flow
+  - Navigation to Signup screen
+  - Error clearing on retry
+
+- `__tests__/SignupScreen.test.tsx`: 11 test cases covering:
+  - Component rendering
+  - UI element display
+  - Name validation (empty)
+  - Email validation (empty, invalid format)
+  - Password validation (empty, too short)
+  - Successful signup flow
+  - Failed signup error handling
+  - Navigation to Login screen
+  - Error clearing on retry
+  - Combined field validation
+
+### Running Tests
+
+Run all tests:
+```bash
+npm test
+# or
+yarn test
+```
+
+Run specific test files:
+```bash
+npm test -- __tests__/LoginScreen.test.tsx
+npm test -- __tests__/SignupScreen.test.tsx
+```
+
+Run tests in watch mode:
+```bash
+npm test -- --watch
+```
+
+Run tests with coverage:
+```bash
+npm test -- --coverage
+```
+
+### Test Configuration
+
+- **Jest Config**: `jest.config.js` - Uses `react-native` preset
+- **Jest Setup**: `jest.setup.js` - Mocks AsyncStorage for testing
+- **Test Environment**: Uses React 19's async `act()` API for proper state updates
+
+### Test Coverage
+
+The test suites validate:
+- ✅ Form validation logic
+- ✅ Error message display
+- ✅ User interactions (button presses, input changes)
+- ✅ Navigation flows
+- ✅ Context integration (AuthContext)
+- ✅ Component rendering
+
 ## Development
 
 ### Available Scripts
 
 - `npm start` or `yarn start`: Start Metro bundler
+- `npm run ios` or `yarn ios`: Build and run on iOS Simulator or device
 - `npm run android` or `yarn android`: Build and run on Android device/emulator
 - `npm test` or `yarn test`: Run Jest tests
 - `npm run lint` or `yarn lint`: Run ESLint to check code quality
@@ -205,7 +325,9 @@ quickauth/
 The app supports Fast Refresh. When you save changes to your code:
 - The app will automatically update
 - State is preserved when possible
-- For a full reload, press `R` twice (Android)
+- For a full reload:
+  - **iOS**: Press `Cmd + R` in the simulator or shake device and select "Reload"
+  - **Android**: Press `R` twice
 
 ## Troubleshooting
 
@@ -215,22 +337,37 @@ The app supports Fast Refresh. When you save changes to your code:
    - Clear cache: `npm start -- --reset-cache`
    - Delete `node_modules` and reinstall
 
-2. **Android build issues**:
+2. **iOS build issues**:
+   - Install CocoaPods dependencies: `cd ios && pod install && cd ..`
+   - If you get encoding errors, set: `export LANG=en_US.UTF-8` before running `pod install`
+   - Clean build folder in Xcode: Product → Clean Build Folder (Shift + Cmd + K)
+   - Delete derived data: `rm -rf ~/Library/Developer/Xcode/DerivedData`
+   - Ensure you're using `MyAuthApp.xcworkspace` (not `.xcodeproj`) after running `pod install`
+   - Check Xcode version compatibility with React Native 0.82.1
+   - If simulator doesn't launch, try: `xcrun simctl list devices` to see available simulators
+
+3. **Android build issues**:
    - Clean gradle: `cd android && ./gradlew clean && cd ..`
    - Check Android SDK and build tools versions
    - Ensure Android emulator is running or device is connected: `adb devices`
 
-3. **Navigation issues**:
+4. **Navigation issues**:
    - Ensure all dependencies are installed: `npm install`
    - Check that navigation is properly wrapped in NavigationContainer
    - Verify React Navigation dependencies are correctly linked
 
-4. **TypeScript errors**:
+5. **TypeScript errors**:
    - Run `npm install` to ensure all type definitions are installed
    - Check `tsconfig.json` configuration
 
-5. **AsyncStorage issues**:
+6. **AsyncStorage issues**:
    - Ensure `@react-native-async-storage/async-storage` is properly installed
+   - For iOS, ensure CocoaPods dependencies are installed: `cd ios && pod install && cd ..`
+
+7. **CocoaPods issues**:
+   - Update CocoaPods: `sudo gem install cocoapods`
+   - Clear CocoaPods cache: `pod cache clean --all`
+   - Reinstall pods: `cd ios && rm -rf Pods Podfile.lock && pod install && cd ..`
 
 ## Code Structure Details
 
